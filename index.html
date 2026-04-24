@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Monitor de Computadores</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 600px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        .offline {
+            background-color: #f99;
+        }
+        .online {
+            background-color: #9f9;
+        }
+        .wake-btn {
+            margin-left: 8px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #fff;
+            background-color: #2477cf;
+            border: none;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Estado de Computadores</h1>
+    <table id="computersTable">
+        <thead>
+            <tr>
+                <th>Ubicación</th>
+                <th>Computador</th>
+                <th>Acción</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Las filas se insertan dinámicamente -->
+        </tbody>
+    </table>
+    <script>
+        const API_URL = '/computers';
+        const PING_INTERVAL = 10000; // 10 segundos
+
+        async function fetchComputers() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error('Error al obtener datos de computadores');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(error);
+                return [];
+            }
+        }
+
+        async function enviarWake(mac, nombre) {
+            if (!mac) {
+                mac = prompt(`Ingrese la dirección MAC para Wake-on-LAN de "${nombre}"`);
+                if (!mac) return;
+            }
+            try {
+                const res = await fetch('/wake', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ mac })
+                });
+                const result = await res.json();
+                alert(result.msg);
+            } catch (e) {
+                alert('Error enviando Wake-on-LAN: ' + e.message);
+            }
+        }
+
+        async function refreshTable() {
+            const data = await fetchComputers();
+            const tbody = document.querySelector('#computersTable tbody');
+            tbody.innerHTML = ''; // Limpiar contenido previo
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">⚠️ Sin datos o error de conexión</td></tr>';
+            return;
+            }
+
+            data.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.className = c.status ? 'online' : 'offline';
+
+                // Ubicación
+                const tdLocation = document.createElement('td');
+                tdLocation.textContent = c.ubicacion;
+                tr.appendChild(tdLocation);
+
+                // Nombre del computador
+                const tdComputer = document.createElement('td');
+                tdComputer.textContent = c.nombre;
+                tr.appendChild(tdComputer);
+
+                // Botón Wake siempre visible
+                const tdWake = document.createElement('td');
+                const btnWake = document.createElement('button');
+                btnWake.textContent = "Encender";
+                btnWake.className = "wake-btn";
+                btnWake.onclick = () => enviarWake(c.mac, c.nombre);
+                tdWake.appendChild(btnWake);
+                tr.appendChild(tdWake);
+
+		const tdStatus = document.createElement('td');
+		tdStatus.textContent = c.status ? '🟢 Online' : '🔴 Offline';
+		tr.appendChild(tdStatus);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Ejecutar la primera carga al abrir la página
+        window.addEventListener('DOMContentLoaded', () => {
+            refreshTable();
+            // Refrescar periódicamente cada PING_INTERVAL
+            setInterval(refreshTable, PING_INTERVAL);
+        });
+    </script>
+</body>
+</html>

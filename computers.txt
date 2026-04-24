@@ -1,0 +1,5 @@
+Nivel Central,SALA01,SALA01-PC.local,18:52:06:2B:B4:2F
+Nivel Central,SALA02,SALA02-PC.local,18:62:24:F3:04:A7
+Nivel Piso 02,SALA01,SALA01-NB.LOCAL,18:64:E5:5B:0A:84
+Nivel Central,Pantalla_Pasillo,PANTALLA02-PC.local,18:52:D0:C6:17:1A
+Nivel PlantaBaja,Pantalla_Pasillo,PANTALLA03-PC.local,D4:5D:DF:15:46:27
